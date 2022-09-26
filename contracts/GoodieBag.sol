@@ -4,11 +4,18 @@ pragma solidity ^0.8.0;
 
 import {IWETH9} from "./IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Swapper} from "./Swapper.sol";
 
 contract GoodieBag {
     address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
 
+    Swapper public swapper;
+
     event MultiBuy(address account, uint256 value);
+
+    constructor() {
+        swapper = new Swapper(address(this));
+    }
 
     /*  
     ================================================================
@@ -20,10 +27,10 @@ contract GoodieBag {
         address[] memory router,
         address[] memory tokens,
         bytes[] memory swapCalldatas
-    ) external payable approve(router) refundETH {
+    ) external payable refundETH {
         depositETH();
         for (uint256 i = 0; i < swapCalldatas.length; i++) {
-            swap(router[i], tokens[i], swapCalldatas[i]);
+            _swap(router[i], tokens[i], swapCalldatas[i]);
         }
         emit MultiBuy(msg.sender, msg.value);
     }
@@ -36,21 +43,18 @@ contract GoodieBag {
 
     function depositETH() internal {
         IWETH9(payable(weth)).deposit{value: msg.value}();
+        swapper.approveGoodiebag();
+        IWETH9(payable(weth)).transfer(address(swapper), msg.value);
     }
 
-    function swap(
+    function _swap(
         address router,
         address token,
         bytes memory swapCalldata
-    ) internal transferTokens(token) returns (bytes memory) {
-        (bool success, bytes memory returndata) = router.call(swapCalldata);
-        if (!success) {
-            if (returndata.length == 0) revert();
-            assembly {
-                revert(add(32, returndata), mload(returndata))
-            }
-        }
-        return returndata;
+    ) internal {
+        try swapper.swap(router, token, swapCalldata, msg.sender) returns (
+            bytes memory
+        ) {} catch {}
     }
 
     /*  
@@ -59,33 +63,16 @@ contract GoodieBag {
     ================================================================ 
     */
 
-    modifier approve(address[] memory router) {
-        uint256 MAX_INT = 2**256 - 1;
-        for (uint256 i = 0; i < router.length; i++) {
-            IERC20(payable(weth)).approve(router[i], MAX_INT);
-        }
-        _;
-    }
-
     modifier refundETH() {
         IWETH9 wrappedETH = IWETH9(payable(weth));
-        uint256 balanceBefore = wrappedETH.balanceOf(address(this));
+        uint256 balanceBefore = wrappedETH.balanceOf(address(swapper));
         _;
-        uint256 balanceAfter = wrappedETH.balanceOf(address(this));
+        uint256 balanceAfter = wrappedETH.balanceOf(address(swapper));
         if (balanceBefore < balanceAfter) {
             uint256 refund = balanceAfter - balanceBefore;
+            wrappedETH.transferFrom(address(swapper), address(this), refund);
             wrappedETH.withdraw(refund);
             payable(msg.sender).transfer(refund);
-        }
-    }
-
-    modifier transferTokens(address token) {
-        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
-        _;
-        uint256 balanceAfter = IERC20(token).balanceOf(address(this));
-        if (balanceBefore < balanceAfter) {
-            uint256 amount = balanceAfter - balanceBefore;
-            IERC20(token).transfer(msg.sender, amount);
         }
     }
 }
