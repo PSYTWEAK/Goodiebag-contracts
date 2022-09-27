@@ -37,13 +37,12 @@ contract GoodieBag {
 
     /*  
     ================================================================
-                        Interal Functions
+                        Internal Functions
     ================================================================ 
     */
 
     function depositETH() internal {
         IWETH9(payable(weth)).deposit{value: msg.value}();
-        swapper.approveGoodiebag();
         IWETH9(payable(weth)).transfer(address(swapper), msg.value);
     }
 
@@ -64,15 +63,17 @@ contract GoodieBag {
     */
 
     modifier refundETH() {
-        IWETH9 wrappedETH = IWETH9(payable(weth));
-        uint256 balanceBefore = wrappedETH.balanceOf(address(swapper));
         _;
-        uint256 balanceAfter = wrappedETH.balanceOf(address(swapper));
-        if (balanceBefore < balanceAfter) {
-            uint256 refund = balanceAfter - balanceBefore;
-            wrappedETH.transferFrom(address(swapper), address(this), refund);
-            wrappedETH.withdraw(refund);
-            payable(msg.sender).transfer(refund);
-        }
+        swapper.refundETH(msg.sender);
+    }
+
+    /*  
+    ================================================================
+                    Public return view Functions
+    ================================================================ 
+    */
+
+    function getSwapper() external view returns (address) {
+        return address(swapper);
     }
 }

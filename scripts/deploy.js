@@ -11,7 +11,9 @@ async function main() {
   goodieBag = await GoodieBag.deploy();
   await goodieBag.deployed();
 
-  console.log("GoodieBag deployed to:", oodieBag.address);
+  console.log("GoodieBag deployed to:", goodieBag.address);
+  const swapper = await goodieBag.getSwapper();
+  console.log("Swapper is:", swapper);
 }
 /*   const [owner, feeCollector, operator] = await ethers.getSigners();
   console.log(owner.address);
