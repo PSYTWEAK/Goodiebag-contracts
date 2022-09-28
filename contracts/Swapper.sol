@@ -60,14 +60,30 @@ contract Swapper {
     ================================================================ 
     */
 
+    // This modifier checks the balance of both this contract and the tx origin account before and after the call
+    // if the tokens were sent to the contract, it transfers them to the tx origin account
+    // this is needed as some swap routers will send the tokens to the contract instead of a speicified reciver address
+    // e.g. 1inch & 0x API
+
     modifier transferTokens(uint256 token, address to) {
-        uint256 balanceBefore = IERC20(_address(token)).balanceOf(to);
+        IERC20 tokenContract = IERC20(_address(token));
+        uint256 senderbalanceBefore = tokenContract.balanceOf(to);
+        uint256 thisbalanceBefore = tokenContract.balanceOf(address(this));
 
         _;
 
-        uint256 balanceAfter = IERC20(_address(token)).balanceOf(to);
+        uint256 senderbalanceAfter = tokenContract.balanceOf(to);
+        uint256 thisbalanceAfter = tokenContract.balanceOf(address(this));
 
-        require(balanceBefore < balanceAfter, "Swapper: No tokens received");
+        if (thisbalanceBefore < thisbalanceAfter) {
+            tokenContract.transfer(to, thisbalanceBefore - thisbalanceAfter);
+        }
+
+        require(
+            senderbalanceBefore < senderbalanceAfter ||
+                thisbalanceBefore < thisbalanceAfter,
+            "Swapper: No tokens received"
+        );
     }
 
     modifier approveRouter(uint256 router) {
