@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import {IWETH9} from "./IWETH9.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Swapper} from "./Swapper.sol";
 
 contract GoodieBag {
@@ -24,8 +23,8 @@ contract GoodieBag {
     */
 
     function multiBuy(
-        address[] memory router,
-        address[] memory tokens,
+        uint256[] memory router,
+        uint256[] memory tokens,
         bytes[] memory swapCalldatas
     ) external payable refundETH {
         depositETH();
@@ -47,8 +46,8 @@ contract GoodieBag {
     }
 
     function _swap(
-        address router,
-        address token,
+        uint256 router,
+        uint256 token,
         bytes memory swapCalldata
     ) internal {
         try swapper.swap(router, token, swapCalldata, msg.sender) returns (
