@@ -12,7 +12,9 @@ contract Swapper {
 
     constructor(address _goodieBag) {
         goodieBag = _goodieBag;
-        arbAddressTable = ArbAddressTable(102);
+        arbAddressTable = ArbAddressTable(
+            0x0000000000000000000000000000000000000064
+        );
     }
 
     /*  
