@@ -2,21 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IWETH9} from "./IWETH9.sol";
-import "arbos-precompiles/arbos/builtin/ArbAddressTable.sol";
+import {IWETH9} from "../interfaces/IWETH9.sol";
+import {AddressTable} from "./AddressTable.sol";
 
-contract Swapper {
-    address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address public goodieBag;
-    ArbAddressTable public arbAddressTable;
-
-    constructor(address _goodieBag) {
-        goodieBag = _goodieBag;
-        arbAddressTable = ArbAddressTable(
-            0x0000000000000000000000000000000000000064
-        );
-    }
-
+contract Swapper is AddressTable {
     /*  
     ================================================================
                         Public Functions
@@ -29,10 +18,10 @@ contract Swapper {
         bytes memory swapCalldata,
         address to
     )
-        public
-        onlyGoodieBag
+        external
         approveRouter(router)
         transferTokens(token, to)
+        onlyThis
         returns (bytes memory)
     {
         (bool success, bytes memory returndata) = _address(router).call(
@@ -45,13 +34,6 @@ contract Swapper {
             }
         }
         return returndata;
-    }
-
-    function refundETH(address to) public onlyGoodieBag {
-        uint256 balance = IWETH9(payable(weth)).balanceOf(address(this));
-        if (balance > 0) {
-            IWETH9(payable(weth)).withdrawTo(to, balance);
-        }
     }
 
     /*  
@@ -93,12 +75,8 @@ contract Swapper {
         IERC20(weth).approve(_address(router), 0);
     }
 
-    modifier onlyGoodieBag() {
-        require(msg.sender == goodieBag, "Swapper: Only GoodieBag can call");
+    modifier onlyThis() {
+        require(msg.sender == address(this), "Swapper: Only this contract");
         _;
-    }
-
-    function _address(uint256 index) public view returns (address) {
-        return arbAddressTable.lookupIndex(index);
     }
 }
