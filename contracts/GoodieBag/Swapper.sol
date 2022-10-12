@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
-import {AddressTable} from "./AddressTable.sol";
+import {VaultFactory} from "./VaultFactory.sol";
 
-contract Swapper is AddressTable {
+contract Swapper {
+    address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+
     /*  
     ================================================================
                         Public Functions
@@ -13,8 +15,8 @@ contract Swapper is AddressTable {
     */
 
     function swap(
-        uint256 router,
-        uint256 token,
+        address router,
+        address token,
         bytes memory swapCalldata,
         address to
     )
@@ -24,9 +26,7 @@ contract Swapper is AddressTable {
         onlyThis
         returns (bytes memory)
     {
-        (bool success, bytes memory returndata) = _address(router).call(
-            swapCalldata
-        );
+        (bool success, bytes memory returndata) = router.call(swapCalldata);
         if (!success) {
             if (returndata.length == 0) revert();
             assembly {
@@ -47,8 +47,8 @@ contract Swapper is AddressTable {
     // this is needed as some swap routers will send the tokens to the contract instead of a speicified reciver address
     // e.g. 1inch & 0x API
 
-    modifier transferTokens(uint256 token, address to) {
-        IERC20 tokenContract = IERC20(_address(token));
+    modifier transferTokens(address token, address to) {
+        IERC20 tokenContract = IERC20(token);
         uint256 senderbalanceBefore = tokenContract.balanceOf(to);
         uint256 thisbalanceBefore = tokenContract.balanceOf(address(this));
 
@@ -57,22 +57,22 @@ contract Swapper is AddressTable {
         uint256 senderbalanceAfter = tokenContract.balanceOf(to);
         uint256 thisbalanceAfter = tokenContract.balanceOf(address(this));
 
-        if (thisbalanceBefore < thisbalanceAfter) {
-            tokenContract.transfer(to, thisbalanceBefore - thisbalanceAfter);
-        }
-
         require(
             senderbalanceBefore < senderbalanceAfter ||
                 thisbalanceBefore < thisbalanceAfter,
             "Swapper: No tokens received"
         );
+
+        if (thisbalanceBefore < thisbalanceAfter) {
+            tokenContract.transfer(to, thisbalanceAfter - thisbalanceBefore);
+        }
     }
 
-    modifier approveRouter(uint256 router) {
+    modifier approveRouter(address router) {
         uint256 MAX_INT = 2**256 - 1;
-        IERC20(weth).approve(_address(router), MAX_INT);
+        IERC20(weth).approve(router, MAX_INT);
         _;
-        IERC20(weth).approve(_address(router), 0);
+        IERC20(weth).approve(router, 0);
     }
 
     modifier onlyThis() {

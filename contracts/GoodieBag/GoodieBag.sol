@@ -6,7 +6,10 @@ import {IWETH9} from "../interfaces/IWETH9.sol";
 import {Swapper} from "./Swapper.sol";
 import {VaultHandler} from "./VaultHandler.sol";
 
-contract GoodieBag is VaultHandler, Swapper {
+contract GoodieBag is
+    Swapper,
+    VaultHandler(0x0000000000000000000000000000000000000066)
+{
     event MultiBuy(address account, uint256 value);
 
     /*  
@@ -16,14 +19,15 @@ contract GoodieBag is VaultHandler, Swapper {
     */
 
     function multiBuy(
-        uint64[] memory router,
-        uint64[] memory tokens,
+        address[] memory router,
+        address[] memory tokens,
         bytes[] memory swapCalldatas,
         bool usingVault
-    ) external payable setUsingVault(usingVault) {
+    ) external payable {
         depositETH();
+        address to = usingVault ? useVault(msg.sender) : msg.sender;
         for (uint256 i = 0; i < swapCalldatas.length; i++) {
-            _swap(router[i], tokens[i], swapCalldatas[i]);
+            _swap(router[i], tokens[i], swapCalldatas[i], to);
         }
         refundETH(msg.sender);
         emit MultiBuy(msg.sender, msg.value);
@@ -40,18 +44,14 @@ contract GoodieBag is VaultHandler, Swapper {
     }
 
     function _swap(
-        uint256 router,
-        uint256 token,
-        bytes memory swapCalldata
+        address router,
+        address token,
+        bytes memory swapCalldata,
+        address to
     ) internal {
-        try
-            this.swap(
-                router,
-                token,
-                swapCalldata,
-                getReceiverAddress(msg.sender)
-            )
-        returns (bytes memory) {} catch {}
+        try this.swap(router, token, swapCalldata, to) returns (
+            bytes memory
+        ) {} catch {}
     }
 
     function refundETH(address to) internal {

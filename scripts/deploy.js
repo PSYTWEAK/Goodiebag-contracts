@@ -7,13 +7,13 @@ const hre = require("hardhat");
 
 async function main() {
   const [owner, feeCollector, operator] = await ethers.getSigners();
+
   const GoodieBag = await hre.ethers.getContractFactory("GoodieBag");
   goodieBag = await GoodieBag.deploy();
   await goodieBag.deployed();
 
   console.log("GoodieBag deployed to:", goodieBag.address);
-  const swapper = await goodieBag.getSwapper();
-  console.log("Swapper is:", swapper);
+
 }
 /*   const [owner, feeCollector, operator] = await ethers.getSigners();
   console.log(owner.address);

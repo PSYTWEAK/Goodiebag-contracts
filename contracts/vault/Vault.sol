@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 contract Vault {
     address public owner;
 
-    constructor() {
-        owner = msg.sender;
+    constructor(address account) {
+        owner = account;
     }
 
     function multicall(address[] calldata targets, bytes[] calldata data)
