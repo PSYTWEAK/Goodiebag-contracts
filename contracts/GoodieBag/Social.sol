@@ -5,6 +5,18 @@ pragma solidity ^0.8.0;
 // any account can create a new stratergy and it will be mapped to their address
 // a stratergy includes a string name,  an array of tokens, and an optional convience fee
 contract Social {
+    event NewStratergy(
+        address indexed account,
+        string name,
+        address[] tokens,
+        uint256 fee
+    );
+    event ChangedStratergy(
+        address indexed account,
+        string name,
+        address[] tokens,
+        uint256 fee
+    );
     /*  
     ================================================================
                         Structs and Mappings
@@ -30,8 +42,6 @@ contract Social {
     ================================================================ 
     */
 
-    // a function which creates a new stratergy
-    // a stratergy is defined by an array of tokens and a name
     function createStratergy(
         address[] memory _tokens,
         string memory _name,
@@ -43,6 +53,7 @@ contract Social {
             _fee
         );
         stratergyCount[msg.sender] += 1;
+        emit NewStratergy(msg.sender, _name, _tokens, _fee);
     }
 
     function editStratergy(
@@ -52,6 +63,7 @@ contract Social {
         uint256 _index
     ) external {
         stratergies[msg.sender][_index] = stratergy(_name, _tokens, _fee);
+        emit ChangedStratergy(msg.sender, _name, _tokens, _fee);
     }
 
     /*
