@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {VaultFactory} from "./VaultFactory.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {VaultFactory} from "./../vaultFactory/VaultFactory.sol";
 
-contract Swapper {
+contract SingleBuy {
     address public weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
 
     /*  

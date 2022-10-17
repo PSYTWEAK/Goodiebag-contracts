@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {Swapper} from "./Swapper.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {SingleBuy} from "./SingleBuy.sol";
 import {VaultHandler} from "./VaultHandler.sol";
 
-contract GoodieBag is
-    Swapper,
-    VaultHandler(0x0000000000000000000000000000000000000066)
+contract MultiBuy is
+    SingleBuy,
+    VaultHandler(0x0253A7C16Af792Dd5E8Df6f41902D09E608799E7)
 {
     event MultiBuy(address account, uint256 value);
 
